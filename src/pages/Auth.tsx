@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Store } from 'lucide-react';
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -49,20 +50,20 @@ const Auth = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="glass-card p-8 space-y-6">
+        <div className="glass-card p-6 space-y-4">
           {/* Header */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-1">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6"
+              className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-3"
             >
-              <span className="text-2xl font-bold text-primary-foreground">MS</span>
+              <Store className="w-6 h-6 text-primary-foreground" />
             </motion.div>
             
-            <h1 className="text-3xl font-bold text-foreground">MyStore</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-xl font-bold text-foreground">MyStore</h1>
+            <p className="text-muted-foreground text-xs">
               Sistema de gestão para sua loja
             </p>
           </div>

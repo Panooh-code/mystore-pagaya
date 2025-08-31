@@ -18,11 +18,7 @@ const loginSchema = z.object({
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string()
-    .min(8, 'Senha deve ter pelo menos 8 caracteres')
-    .regex(/[A-Z]/, 'Senha deve conter pelo menos 1 letra maiúscula')
-    .regex(/[a-z]/, 'Senha deve conter pelo menos 1 letra minúscula')
-    .regex(/[0-9]/, 'Senha deve conter pelo menos 1 número'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
 interface EmailPasswordFormProps {
@@ -130,11 +126,6 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
                   />
                 </FormControl>
                 <FormMessage className="text-xs" />
-                {type === 'signup' && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Mín. 8 caracteres, 1 maiúscula, 1 minúscula, 1 número
-                  </p>
-                )}
               </FormItem>
             )}
           />
