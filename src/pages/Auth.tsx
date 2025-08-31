@@ -50,19 +50,10 @@ const Auth = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="glass-card p-6 space-y-4">
+        <div className="glass-card p-4 space-y-3">
           {/* Header */}
-          <div className="text-center space-y-1">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-3"
-            >
-              <Store className="w-6 h-6 text-primary-foreground" />
-            </motion.div>
-            
-            <h1 className="text-xl font-bold text-foreground">MyStore</h1>
+          <div className="text-center space-y-1 mb-2">
+            <h1 className="text-lg font-bold text-foreground">MyStore</h1>
             <p className="text-muted-foreground text-xs">
               Sistema de gestão para sua loja
             </p>

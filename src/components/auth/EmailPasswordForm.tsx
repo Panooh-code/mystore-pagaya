@@ -66,7 +66,7 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
       transition={{ duration: 0.3 }}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
           {type === 'signup' && (
             <FormField
               control={form.control}
@@ -77,9 +77,9 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
                   <FormControl>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
+                       <Input
                         placeholder="Seu nome completo"
-                        className="pl-10 glass-card border-border/50 focus:border-ring h-12"
+                        className="pl-10 glass-card border-border/50 focus:border-ring h-10"
                         {...field}
                       />
                     </div>
@@ -102,7 +102,7 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
                     <Input
                       type="email"
                       placeholder="seu@email.com"
-                      className="pl-10 glass-card border-border/50 focus:border-ring h-12"
+                      className="pl-10 glass-card border-border/50 focus:border-ring h-10"
                       {...field}
                     />
                   </div>
@@ -120,8 +120,8 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
                 <FormLabel className="text-sm font-medium">Senha</FormLabel>
                 <FormControl>
                   <PasswordInput
-                    placeholder={type === 'login' ? 'Sua senha' : 'Crie uma senha forte'}
-                    className="glass-card border-border/50 focus:border-ring h-12"
+                    placeholder={type === 'login' ? 'Sua senha' : 'Crie uma senha'}
+                    className="glass-card border-border/50 focus:border-ring h-10"
                     {...field}
                   />
                 </FormControl>
@@ -136,9 +136,9 @@ export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
           >
             <Button
               type="submit"
-              size="lg"
+              size="default"
               disabled={loading}
-              className="w-full button-large mt-6"
+              className="w-full mt-4"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {loading 
