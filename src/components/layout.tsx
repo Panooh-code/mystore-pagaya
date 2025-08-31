@@ -3,6 +3,17 @@ import { motion } from "framer-motion"
 import { useLocation } from "react-router-dom"
 import { BottomNavigation } from "./bottom-navigation"
 import { ThemeToggle } from "./theme-toggle"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "./ui/button"
+import { LogOut, User } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu"
 
 interface LayoutProps {
   children: ReactNode
@@ -28,6 +39,11 @@ const getPageTitle = (pathname: string) => {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const title = getPageTitle(location.pathname)
+  const { user, signOut } = useAuth()
+
+  const handleLogout = async () => {
+    await signOut()
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -40,7 +56,31 @@ export function Layout({ children }: LayoutProps) {
               <span className="text-sm text-muted-foreground">• {title}</span>
             )}
           </div>
-          <ThemeToggle />
+          
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="glass">
+                  <User className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="glass-card">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs text-muted-foreground">
+                  {user?.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
