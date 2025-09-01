@@ -39,6 +39,7 @@ const Gerenciamento = () => {
     updateEmployeeStatus,
     deleteEmployee,
     getAvailableActions,
+    refetch,
   } = useEmployeeManagement();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -183,6 +184,9 @@ const Gerenciamento = () => {
             <h3 className="text-lg font-semibold">Erro ao carregar usuários</h3>
             <p className="text-muted-foreground">{error}</p>
           </div>
+          <Button onClick={refetch} variant="outline">
+            Tentar novamente
+          </Button>
         </div>
       </div>
     );

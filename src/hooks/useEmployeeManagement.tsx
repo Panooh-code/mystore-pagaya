@@ -24,23 +24,44 @@ export const useEmployeeManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEmployees = async () => {
-    if (!user || !currentEmployee) return;
+    if (!user) {
+      console.log('useEmployeeManagement: No user found');
+      setLoading(false);
+      return;
+    }
 
+    console.log('useEmployeeManagement: Fetching employees for user:', user.email);
+    
     try {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('useEmployeeManagement: Query result:', { data, error });
+
       if (error) {
         console.error('Error fetching employees:', error);
-        setError(error.message);
+        setError(`Erro ao carregar funcionários: ${error.message}`);
+        toast({
+          title: "Erro ao carregar funcionários",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
+        console.log('useEmployeeManagement: Successfully fetched employees:', data?.length);
         setEmployees(data || []);
+        setError(null);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      setError('Erro inesperado ao buscar funcionários');
+      const errorMessage = 'Erro inesperado ao buscar funcionários';
+      setError(errorMessage);
+      toast({
+        title: "Erro inesperado",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -68,7 +89,7 @@ export const useEmployeeManagement = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, currentEmployee]);
+  }, [user]);
 
   const updateEmployeeRole = async (employeeId: string, newRole: Employee['role']) => {
     try {
