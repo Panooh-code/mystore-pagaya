@@ -1,19 +1,22 @@
 import { ReactNode } from "react"
 import { motion } from "framer-motion"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import { BottomNavigation } from "./bottom-navigation"
-import { ThemeToggle } from "./theme-toggle"
 import { useAuth } from "@/contexts/AuthContext"
+import { useEmployee } from "@/hooks/useEmployee"
+import { usePendingUsers } from "@/hooks/usePendingUsers"
+import { useTheme } from "./theme-provider"
 import { Button } from "./ui/button"
-import { LogOut, User } from "lucide-react"
+import { Badge } from "./ui/badge"
+import { LogOut, User, UserCog, Settings, Moon, Sun } from "lucide-react"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu"
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "./ui/drawer"
 
 interface LayoutProps {
   children: ReactNode
@@ -40,10 +43,16 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const title = getPageTitle(location.pathname)
   const { user, signOut } = useAuth()
+  const { employee, isAdmin } = useEmployee()
+  const { pendingCount } = usePendingUsers()
+  const { theme, setTheme } = useTheme()
 
   const handleLogout = async () => {
     await signOut()
   }
+
+  // Check if user can see Users menu (proprietario or super admin)
+  const canManageUsers = isAdmin || user?.email === 'info@panooh.com'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -57,29 +66,94 @@ export function Layout({ children }: LayoutProps) {
             )}
           </div>
           
-          <div className="flex items-center space-x-2">
-            <ThemeToggle />
-            
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+          <div className="flex items-center space-x-2">            
+            {/* User Menu Drawer */}
+            <Drawer direction="right">
+              <DrawerTrigger asChild>
                 <Button variant="ghost" size="icon" className="glass">
                   <User className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="glass-card">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-xs text-muted-foreground">
-                  {user?.email}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </DrawerTrigger>
+              <DrawerContent className="glass-card h-full w-80 ml-auto">
+                <DrawerHeader className="text-left">
+                  <DrawerTitle className="text-lg font-semibold">Menu Principal</DrawerTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {employee?.nome_completo || user?.email}
+                  </p>
+                </DrawerHeader>
+                
+                <div className="px-4 py-2 space-y-6">
+                  {/* Navegação */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground px-2">Navegação</h3>
+                    
+                    {/* Meu Perfil */}
+                    <DrawerClose asChild>
+                      <Link 
+                        to="/perfil" 
+                        className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                      >
+                        <UserCog className="h-4 w-4" />
+                        <span>Meu Perfil</span>
+                      </Link>
+                    </DrawerClose>
+                    
+                    {/* Usuários (apenas para admins) */}
+                    {canManageUsers && (
+                      <DrawerClose asChild>
+                        <Link 
+                          to="/gerenciamento" 
+                          className="flex items-center justify-between px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Settings className="h-4 w-4" />
+                            <span>Usuários</span>
+                          </div>
+                          {pendingCount > 0 && (
+                            <Badge variant="destructive" className="ml-2 text-xs">
+                              {pendingCount}
+                            </Badge>
+                          )}
+                        </Link>
+                      </DrawerClose>
+                    )}
+                  </div>
+
+                  {/* Configurações */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground px-2">Configurações</h3>
+                    
+                    {/* Theme Toggle */}
+                    <button
+                      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                      className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors w-full text-left"
+                    >
+                      <div className="relative">
+                        <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute top-0 left-0 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                      </div>
+                      <span>Alternar Tema</span>
+                    </button>
+                  </div>
+
+                  {/* Conta */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground px-2">Conta</h3>
+                    <p className="text-xs text-muted-foreground px-2 break-all">
+                      {user?.email}
+                    </p>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sair</span>
+                    </button>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </header>

@@ -56,6 +56,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_pending_employees_count: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
