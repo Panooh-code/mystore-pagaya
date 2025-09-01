@@ -203,6 +203,53 @@ export type Database = {
           },
         ]
       }
+      sales: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          desconto_percentual: number | null
+          employee_id: string | null
+          fatura_numero: string
+          id: string
+          tipo_transacao: Database["public"]["Enums"]["sale_type"] | null
+          total_venda: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          desconto_percentual?: number | null
+          employee_id?: string | null
+          fatura_numero: string
+          id?: string
+          tipo_transacao?: Database["public"]["Enums"]["sale_type"] | null
+          total_venda?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          desconto_percentual?: number | null
+          employee_id?: string | null
+          fatura_numero?: string
+          id?: string
+          tipo_transacao?: Database["public"]["Enums"]["sale_type"] | null
+          total_venda?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -214,7 +261,9 @@ export type Database = {
           observacoes: string | null
           origem: string | null
           quantidade: number
+          sale_id: string | null
           tipo: string
+          tipo_movimento: Database["public"]["Enums"]["stock_movement_type"]
           variant_id: string
         }
         Insert: {
@@ -227,7 +276,9 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           quantidade: number
+          sale_id?: string | null
           tipo: string
+          tipo_movimento: Database["public"]["Enums"]["stock_movement_type"]
           variant_id: string
         }
         Update: {
@@ -240,10 +291,26 @@ export type Database = {
           observacoes?: string | null
           origem?: string | null
           quantidade?: number
+          sale_id?: string | null
           tipo?: string
+          tipo_movimento?: Database["public"]["Enums"]["stock_movement_type"]
           variant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_stock_movements_variant"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_movements_variant_id_fkey"
             columns: ["variant_id"]
@@ -324,6 +391,14 @@ export type Database = {
     Enums: {
       employee_role: "proprietario" | "gerente" | "vendedor"
       employee_status: "ativo" | "pendente" | "bloqueado"
+      sale_type: "VENDA" | "DEVOLUCAO" | "TROCA"
+      stock_movement_type:
+        | "VENDA"
+        | "DEVOLUCAO_LOJA"
+        | "DEVOLUCAO_FORNECEDOR"
+        | "TRANSFERENCIA_ENTRADA"
+        | "TRANSFERENCIA_SAIDA"
+        | "AJUSTE_INICIAL"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -453,6 +528,15 @@ export const Constants = {
     Enums: {
       employee_role: ["proprietario", "gerente", "vendedor"],
       employee_status: ["ativo", "pendente", "bloqueado"],
+      sale_type: ["VENDA", "DEVOLUCAO", "TROCA"],
+      stock_movement_type: [
+        "VENDA",
+        "DEVOLUCAO_LOJA",
+        "DEVOLUCAO_FORNECEDOR",
+        "TRANSFERENCIA_ENTRADA",
+        "TRANSFERENCIA_SAIDA",
+        "AJUSTE_INICIAL",
+      ],
     },
   },
 } as const
