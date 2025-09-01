@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { ShoppingCart, RotateCcw } from 'lucide-react';
 import { useEmployee } from '@/hooks/useEmployee';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ interface CheckoutFormProps {
   onRegistrarVenda: () => void;
   onRegistrarDevolucao: () => void;
   isEmpty: boolean;
+  loading?: boolean;
 }
 
 export const CheckoutForm: React.FC<CheckoutFormProps> = ({
@@ -34,11 +36,12 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
   total,
   onRegistrarVenda,
   onRegistrarDevolucao,
-  isEmpty
+  isEmpty,
+  loading = false
 }) => {
   const { employee } = useEmployee();
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
 
   // Carregar lista de funcionários
   useEffect(() => {
@@ -61,7 +64,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
       } catch (error) {
         console.error('Error fetching employees:', error);
       } finally {
-        setLoading(false);
+        setEmployeesLoading(false);
       }
     };
 
@@ -130,7 +133,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
           <Select
             value={vendedorId}
             onValueChange={onVendedorChange}
-            disabled={loading}
+            disabled={employeesLoading}
           >
             <SelectTrigger className="glass-card border-0">
               <SelectValue placeholder="Selecione o vendedor" />
@@ -172,18 +175,22 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({
         <div className="space-y-3 pt-4">
           <Button
             onClick={onRegistrarVenda}
-            disabled={!isFormValid}
-            className="w-full button-large"
+            disabled={!isFormValid || loading}
+            className="w-full text-lg py-6 font-bold"
+            size="lg"
           >
-            Registrar Venda
+            <ShoppingCart className="h-5 w-5 mr-2" />
+            {loading ? 'Processando...' : 'Registrar Venda'}
           </Button>
           
           <Button
             variant="outline"
             onClick={onRegistrarDevolucao}
-            disabled={!isFormValid}
-            className="w-full glass-card border-0"
+            disabled={loading}
+            className="w-full text-lg py-6 font-bold"
+            size="lg"
           >
+            <RotateCcw className="h-5 w-5 mr-2" />
             Registrar Devolução/Troca
           </Button>
         </div>

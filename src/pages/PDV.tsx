@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { ShoppingCart, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from '@/hooks/useCart';
+import { useSales } from '@/hooks/useSales';
+import { useEmployee } from '@/hooks/useEmployee';
 import { ProductSearch } from '@/components/pdv/ProductSearch';
 import { CartItem } from '@/components/pdv/CartItem';
 import { CheckoutForm } from '@/components/pdv/CheckoutForm';
+import { DevolucaoModal } from '@/components/pdv/DevolucaoModal';
 
 export default function PDV() {
   const {
@@ -19,54 +22,44 @@ export default function PDV() {
     isEmpty
   } = useCart();
 
+  const { registrarTransacao, convertCartItemsToTransacaoItems, loading: salesLoading } = useSales();
+  const { employee } = useEmployee();
+
   // Estados do formulário de checkout
   const [numeroFatura, setNumeroFatura] = useState('');
   const [desconto, setDesconto] = useState(0);
   const [vendedorId, setVendedorId] = useState('');
+  const [devolucaoModalOpen, setDevolucaoModalOpen] = useState(false);
 
   // Calcular total com desconto
   const total = calculateTotal(desconto);
 
-  // Função para registrar venda (temporário - console.log)
-  const handleRegistrarVenda = () => {
-    const checkoutData = {
-      numeroFatura,
-      desconto,
-      vendedorId,
-      total,
-      itens: items,
-      tipo: 'VENDA'
+  // Função para registrar venda
+  const handleRegistrarVenda = async () => {
+    if (!numeroFatura.trim() || !vendedorId || isEmpty) {
+      return;
+    }
+
+    const payload = {
+      fatura_numero: numeroFatura.trim(),
+      desconto_percentual: desconto,
+      employee_id: vendedorId,
+      tipo_transacao: 'VENDA' as const,
+      itens: convertCartItemsToTransacaoItems(items)
     };
-    
-    console.log('🛍️ Dados da Venda:', checkoutData);
-    console.log('📋 Resumo:', {
-      totalItens: itemCount,
-      subtotal: subtotalAmount,
-      descontoAplicado: desconto,
-      valorDesconto: (subtotalAmount * desconto) / 100,
-      valorFinal: total
-    });
+
+    const { error } = await registrarTransacao(payload);
+    if (!error) {
+      clearCart();
+      setNumeroFatura('');
+      setDesconto(0);
+      setVendedorId('');
+    }
   };
 
-  // Função para registrar devolução (temporário - console.log)
+  // Função para abrir modal de devolução
   const handleRegistrarDevolucao = () => {
-    const checkoutData = {
-      numeroFatura,
-      desconto,
-      vendedorId,
-      total,
-      itens: items,
-      tipo: 'DEVOLUCAO'
-    };
-    
-    console.log('🔄 Dados da Devolução/Troca:', checkoutData);
-    console.log('📋 Resumo:', {
-      totalItens: itemCount,
-      subtotal: subtotalAmount,
-      descontoAplicado: desconto,
-      valorDesconto: (subtotalAmount * desconto) / 100,
-      valorFinal: total
-    });
+    setDevolucaoModalOpen(true);
   };
 
   return (
@@ -147,9 +140,19 @@ export default function PDV() {
             onRegistrarVenda={handleRegistrarVenda}
             onRegistrarDevolucao={handleRegistrarDevolucao}
             isEmpty={isEmpty}
+            loading={salesLoading}
           />
         </div>
       </div>
+
+      {/* Modal de Devolução/Troca */}
+      <DevolucaoModal
+        open={devolucaoModalOpen}
+        onClose={() => setDevolucaoModalOpen(false)}
+        onSuccess={() => {
+          console.log('Devolução/Troca processada com sucesso');
+        }}
+      />
     </div>
   );
 }
