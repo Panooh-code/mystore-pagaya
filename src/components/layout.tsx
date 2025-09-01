@@ -8,13 +8,11 @@ import { usePendingUsers } from "@/hooks/usePendingUsers"
 import { useTheme } from "./theme-provider"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
-import { LogOut, User, UserCog, Settings, Moon, Sun } from "lucide-react"
+import { LogOut, User, UserCog, Users, Moon, Sun } from "lucide-react"
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "./ui/drawer"
 
@@ -75,25 +73,23 @@ export function Layout({ children }: LayoutProps) {
                 </Button>
               </DrawerTrigger>
               <DrawerContent className="glass-card h-full w-80 ml-auto">
-                <DrawerHeader className="text-left">
-                  <DrawerTitle className="text-lg font-semibold">Menu Principal</DrawerTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {employee?.nome_completo || user?.email}
-                  </p>
-                </DrawerHeader>
-                
-                <div className="px-4 py-2 space-y-6">
-                  {/* Navegação */}
+                <div className="px-4 py-6 space-y-4">
+                  {/* Boas vindas */}
+                  <div className="px-2">
+                    <p className="text-lg font-medium">
+                      Olá, {employee?.nome_completo || user?.email?.split('@')[0]}
+                    </p>
+                  </div>
+                  
+                  {/* Menu Items */}
                   <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-muted-foreground px-2">Navegação</h3>
-                    
                     {/* Meu Perfil */}
                     <DrawerClose asChild>
                       <Link 
                         to="/perfil" 
-                        className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                        className="flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200"
                       >
-                        <UserCog className="h-4 w-4" />
+                        <UserCog className="h-5 w-5" />
                         <span>Meu Perfil</span>
                       </Link>
                     </DrawerClose>
@@ -103,10 +99,10 @@ export function Layout({ children }: LayoutProps) {
                       <DrawerClose asChild>
                         <Link 
                           to="/gerenciamento" 
-                          className="flex items-center justify-between px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                          className="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200"
                         >
                           <div className="flex items-center space-x-3">
-                            <Settings className="h-4 w-4" />
+                            <Users className="h-5 w-5" />
                             <span>Usuários</span>
                           </div>
                           {pendingCount > 0 && (
@@ -117,37 +113,25 @@ export function Layout({ children }: LayoutProps) {
                         </Link>
                       </DrawerClose>
                     )}
-                  </div>
 
-                  {/* Configurações */}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-muted-foreground px-2">Configurações</h3>
-                    
                     {/* Theme Toggle */}
                     <button
                       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                      className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors w-full text-left"
+                      className="flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200 w-full text-left"
                     >
                       <div className="relative">
-                        <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute top-0 left-0 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute top-0 left-0 h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                       </div>
-                      <span>Alternar Tema</span>
+                      <span>Tema</span>
                     </button>
-                  </div>
 
-                  {/* Conta */}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-muted-foreground px-2">Conta</h3>
-                    <p className="text-xs text-muted-foreground px-2 break-all">
-                      {user?.email}
-                    </p>
-                    
+                    {/* Logout */}
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-3 px-2 py-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors w-full text-left"
+                      className="flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all duration-200 w-full text-left"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-5 w-5" />
                       <span>Sair</span>
                     </button>
                   </div>
