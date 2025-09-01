@@ -10,6 +10,7 @@ import { useProducts, Product, ProductVariant } from '@/hooks/useProducts';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import { ProductModal } from '@/components/products/ProductModal';
 import { StockMovementModal } from '@/components/products/StockMovementModal';
+import { formatPrice } from '@/lib/utils';
 
 export default function Produtos() {
   const { products, loading, isAdmin, employee } = useProducts();
@@ -34,12 +35,6 @@ export default function Produtos() {
     return 'default';
   };
 
-  const formatPrice = (price?: number) => {
-    return price ? new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price) : '-';
-  };
 
   // Only show cost and tax fields for proprietários
   const canViewFinancials = employee?.role === 'proprietario';
@@ -59,16 +54,22 @@ export default function Produtos() {
   return (
     <div className="space-y-6">
       <Card className="glass-card border-0">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="space-y-4">
           <CardTitle className="text-xl flex items-center gap-2">
             <Package className="h-5 w-5" />
             Gestão de Produtos
           </CardTitle>
           {isAdmin && (
-            <Button onClick={() => setIsProductModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Produto
-            </Button>
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => setIsProductModalOpen(true)}
+                className="bg-gradient-primary hover:opacity-90 text-white font-medium px-6 py-2"
+                size="lg"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Produto
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent>
