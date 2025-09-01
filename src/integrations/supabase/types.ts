@@ -47,6 +47,201 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          cor: string | null
+          created_at: string
+          foto_url_1: string | null
+          foto_url_2: string | null
+          foto_url_3: string | null
+          foto_url_4: string | null
+          id: string
+          local_estoque: string | null
+          local_loja: string | null
+          preco_venda: number | null
+          product_id: string
+          quantidade_estoque: number | null
+          quantidade_loja: number | null
+          referencia: string
+          tamanho: string | null
+          updated_at: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          foto_url_1?: string | null
+          foto_url_2?: string | null
+          foto_url_3?: string | null
+          foto_url_4?: string | null
+          id?: string
+          local_estoque?: string | null
+          local_loja?: string | null
+          preco_venda?: number | null
+          product_id: string
+          quantidade_estoque?: number | null
+          quantidade_loja?: number | null
+          referencia: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          foto_url_1?: string | null
+          foto_url_2?: string | null
+          foto_url_3?: string | null
+          foto_url_4?: string | null
+          id?: string
+          local_estoque?: string | null
+          local_loja?: string | null
+          preco_venda?: number | null
+          product_id?: string
+          quantidade_estoque?: number | null
+          quantidade_loja?: number | null
+          referencia?: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          categoria: string
+          created_at: string
+          fornecedor_id: string | null
+          id: string
+          impostos_percentual: number | null
+          is_consignado: boolean | null
+          modelo: string | null
+          nome: string
+          observacoes: string | null
+          updated_at: string
+          valor_custo: number | null
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          impostos_percentual?: number | null
+          is_consignado?: boolean | null
+          modelo?: string | null
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+          valor_custo?: number | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          impostos_percentual?: number | null
+          is_consignado?: boolean | null
+          modelo?: string | null
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+          valor_custo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          destino: string | null
+          employee_id: string
+          id: string
+          observacoes: string | null
+          origem: string | null
+          quantidade: number
+          tipo: string
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          destino?: string | null
+          employee_id: string
+          id?: string
+          observacoes?: string | null
+          origem?: string | null
+          quantidade: number
+          tipo: string
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          destino?: string | null
+          employee_id?: string
+          id?: string
+          observacoes?: string | null
+          origem?: string | null
+          quantidade?: number
+          tipo?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contato: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
