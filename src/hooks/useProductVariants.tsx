@@ -7,7 +7,7 @@ import { ProductVariant } from './useProducts';
 
 export const useProductVariants = (productId?: string) => {
   const { user } = useAuth();
-  const { isAdmin } = useEmployee();
+  const { isAdmin, employee } = useEmployee();
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +41,14 @@ export const useProductVariants = (productId?: string) => {
     }
 
     try {
+      const variantWithAudit = {
+        ...variantData,
+        created_by: employee?.id
+      };
+
       const { data, error } = await supabase
         .from('product_variants')
-        .insert(variantData)
+        .insert(variantWithAudit)
         .select()
         .single();
 
@@ -66,9 +71,14 @@ export const useProductVariants = (productId?: string) => {
     }
 
     try {
+      const variantsWithAudit = variants.map(variant => ({
+        ...variant,
+        created_by: employee?.id
+      }));
+
       const { data, error } = await supabase
         .from('product_variants')
-        .insert(variants)
+        .insert(variantsWithAudit)
         .select();
 
       if (error) throw error;

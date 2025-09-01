@@ -115,6 +115,11 @@ export const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> =
                       <div className="text-sm">
                         <span className="font-medium">Preço:</span> {formatPrice(variant.preco_venda)}
                       </div>
+                      {variant.impostos_percentual && (
+                        <div className="text-sm">
+                          <span className="font-medium">Impostos:</span> {variant.impostos_percentual}%
+                        </div>
+                      )}
                       <div className="text-sm">
                         <span className="font-medium">Estoque Loja:</span> {variant.quantidade_loja}
                       </div>
@@ -140,7 +145,8 @@ export const ProductConfirmationModal: React.FC<ProductConfirmationModalProps> =
             <Button
               onClick={onConfirm}
               disabled={loading}
-              className="bg-gradient-primary hover:opacity-90"
+              className="bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold px-8 py-3 text-lg"
+              size="lg"
             >
               {loading ? 'Criando...' : 'Criar Produto'}
             </Button>

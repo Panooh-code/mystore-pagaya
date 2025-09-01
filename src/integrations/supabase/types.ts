@@ -51,11 +51,13 @@ export type Database = {
         Row: {
           cor: string | null
           created_at: string
+          created_by: string | null
           foto_url_1: string | null
           foto_url_2: string | null
           foto_url_3: string | null
           foto_url_4: string | null
           id: string
+          impostos_percentual: number | null
           local_estoque: string | null
           local_loja: string | null
           preco_venda: number | null
@@ -69,11 +71,13 @@ export type Database = {
         Insert: {
           cor?: string | null
           created_at?: string
+          created_by?: string | null
           foto_url_1?: string | null
           foto_url_2?: string | null
           foto_url_3?: string | null
           foto_url_4?: string | null
           id?: string
+          impostos_percentual?: number | null
           local_estoque?: string | null
           local_loja?: string | null
           preco_venda?: number | null
@@ -87,11 +91,13 @@ export type Database = {
         Update: {
           cor?: string | null
           created_at?: string
+          created_by?: string | null
           foto_url_1?: string | null
           foto_url_2?: string | null
           foto_url_3?: string | null
           foto_url_4?: string | null
           id?: string
+          impostos_percentual?: number | null
           local_estoque?: string | null
           local_loja?: string | null
           preco_venda?: number | null
@@ -103,6 +109,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_variants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
@@ -116,6 +129,7 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string
+          created_by: string | null
           fornecedor_id: string | null
           id: string
           impostos_percentual: number | null
@@ -129,6 +143,7 @@ export type Database = {
         Insert: {
           categoria: string
           created_at?: string
+          created_by?: string | null
           fornecedor_id?: string | null
           id?: string
           impostos_percentual?: number | null
@@ -142,6 +157,7 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string
+          created_by?: string | null
           fornecedor_id?: string | null
           id?: string
           impostos_percentual?: number | null
@@ -153,6 +169,13 @@ export type Database = {
           valor_custo?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_fornecedor_id_fkey"
             columns: ["fornecedor_id"]

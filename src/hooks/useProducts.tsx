@@ -25,8 +25,13 @@ export interface Product {
   is_consignado: boolean;
   observacoes?: string;
   created_at: string;
+  created_by?: string;
   supplier?: Supplier;
   variants?: ProductVariant[];
+  created_by_employee?: {
+    nome_completo: string;
+    email: string;
+  };
 }
 
 export interface ProductVariant {
@@ -36,6 +41,7 @@ export interface ProductVariant {
   cor?: string;
   tamanho?: string;
   preco_venda?: number;
+  impostos_percentual?: number;
   quantidade_loja: number;
   local_loja?: string;
   quantidade_estoque: number;
@@ -44,6 +50,7 @@ export interface ProductVariant {
   foto_url_2?: string;
   foto_url_3?: string;
   foto_url_4?: string;
+  created_by?: string;
 }
 
 export const useProducts = () => {
@@ -64,7 +71,8 @@ export const useProducts = () => {
         .select(`
           *,
           supplier:suppliers(*),
-          variants:product_variants(*)
+          variants:product_variants(*),
+          created_by_employee:employees!products_created_by_fkey(nome_completo, email)
         `)
         .order('created_at', { ascending: false });
 
@@ -97,16 +105,21 @@ export const useProducts = () => {
     }
   };
 
-  const createProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'supplier' | 'variants'>) => {
+  const createProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'supplier' | 'variants' | 'created_by_employee'>) => {
     if (!isAdmin) {
       toast({ title: "Erro", description: "Sem permissão para criar produtos", variant: "destructive" });
       return null;
     }
 
     try {
+      const productWithAudit = {
+        ...productData,
+        created_by: employee?.id
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert(productData)
+        .insert(productWithAudit)
         .select()
         .single();
 
