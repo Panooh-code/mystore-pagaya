@@ -195,15 +195,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
   const handleSubmit = async () => {
     if (step === 1) {
-      // Validate required fields
-      if (!productData.nome?.trim()) {
-        toast({ title: "Erro", description: "Nome do produto é obrigatório", variant: "destructive" });
-        return;
-      }
-      if (!productData.categoria?.trim()) {
-        toast({ title: "Erro", description: "Categoria é obrigatória", variant: "destructive" });
-        return;
-      }
       setStep(2);
       return;
     }
@@ -346,15 +337,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="nome" className="flex items-center gap-1">
-                    Nome do Produto 
-                    <span className="text-destructive">*</span>
+                    Nome do Produto
                   </Label>
                   <Input
                     id="nome"
                     value={productData.nome}
                     onChange={(e) => setProductData(prev => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Camisa Polo"
-                    className={!productData.nome?.trim() ? "border-destructive" : ""}
                   />
                 </div>
                 <div>
@@ -371,15 +360,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="categoria" className="flex items-center gap-1">
-                    Categoria 
-                    <span className="text-destructive">*</span>
+                    Categoria
                   </Label>
                   <Input
                     id="categoria"
                     value={productData.categoria}
                     onChange={(e) => setProductData(prev => ({ ...prev, categoria: e.target.value }))}
                     placeholder="Ex: Roupas, Calçados, Acessórios"
-                    className={!productData.categoria?.trim() ? "border-destructive" : ""}
                   />
                 </div>
                 <div>
@@ -657,7 +644,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
           
           <Button 
             onClick={handleSubmit}
-            disabled={isSubmitting || (step === 1 && (!productData.nome?.trim() || !productData.categoria?.trim()))}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

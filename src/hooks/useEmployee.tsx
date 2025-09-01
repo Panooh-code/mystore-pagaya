@@ -22,10 +22,13 @@ export const useEmployee = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       if (!user) {
+        console.log('useEmployee: No user found');
         setEmployee(null);
         setLoading(false);
         return;
       }
+
+      console.log('useEmployee: Fetching employee for user:', user.id, user.email);
 
       try {
         const { data, error } = await supabase
@@ -36,8 +39,27 @@ export const useEmployee = () => {
 
         if (error) {
           console.error('Error fetching employee:', error);
-          setError(error.message);
+          
+          // Fallback para o admin principal
+          if (user.email === 'info@panooh.com') {
+            console.log('useEmployee: Fallback for main admin');
+            const { data: adminData, error: adminError } = await supabase
+              .from('employees')
+              .select('*')
+              .eq('email', 'info@panooh.com')
+              .single();
+            
+            if (!adminError && adminData) {
+              console.log('useEmployee: Admin fallback successful:', adminData);
+              setEmployee(adminData);
+            } else {
+              setError(error.message);
+            }
+          } else {
+            setError(error.message);
+          }
         } else {
+          console.log('useEmployee: Employee found:', data);
           setEmployee(data);
         }
       } catch (err) {
@@ -54,6 +76,21 @@ export const useEmployee = () => {
   const isActive = employee?.status === 'ativo';
   const isAdmin = employee?.role === 'proprietario' || employee?.role === 'gerente';
   const isPending = employee?.status === 'pendente';
+
+  // Log para debug
+  console.log('useEmployee state:', {
+    employee: employee ? {
+      id: employee.id,
+      email: employee.email,
+      role: employee.role,
+      status: employee.status
+    } : null,
+    isActive,
+    isAdmin,
+    isPending,
+    loading,
+    error
+  });
 
   return {
     employee,
