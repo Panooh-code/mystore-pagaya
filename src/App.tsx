@@ -12,6 +12,7 @@ import PDV from "./pages/PDV";
 import Produtos from "./pages/Produtos";
 import Fornecedores from "./pages/Fornecedores";
 import Funcionarios from "./pages/Funcionarios";
+import Gerenciamento from "./pages/Gerenciamento";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +63,13 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Funcionarios />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/gerenciamento" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Gerenciamento />
                   </Layout>
                 </ProtectedRoute>
               } />
