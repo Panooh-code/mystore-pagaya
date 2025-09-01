@@ -122,8 +122,14 @@ export const useStockMovements = () => {
       const { error: movementError } = await supabase
         .from('stock_movements')
         .insert({
-          ...movementData,
-          employee_id: employee.user_id
+          variant_id: movementData.variant_id,
+          employee_id: employee.id,
+          tipo: movementData.tipo,
+          tipo_movimento: movementData.tipo.toUpperCase() as any,
+          quantidade: movementData.quantidade,
+          origem: movementData.origem,
+          destino: movementData.destino,
+          observacoes: movementData.observacoes
         });
 
       if (movementError) throw movementError;
