@@ -2,8 +2,14 @@ import { motion } from "framer-motion"
 import { Plus, TrendingUp, Package, CreditCard, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useEmployee } from "@/hooks/useEmployee"
+import { ProductModal } from "@/components/products/ProductModal"
+import { useState } from "react"
 
 export default function Dashboard() {
+  const { isAdmin } = useEmployee()
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  
   const stats = [
     { name: "Vendas Hoje", value: "R$ 2.847", icon: TrendingUp, trend: "+12%" },
     { name: "Produtos", value: "234", icon: Package, trend: "+3" },
@@ -54,13 +60,16 @@ export default function Dashboard() {
           <CardTitle className="text-lg">Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button 
-            className="w-full button-large bg-primary hover:bg-primary/90 text-primary-foreground"
-            size="lg"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Adicionar Novo Produto
-          </Button>
+          {isAdmin && (
+            <Button 
+              className="w-full button-large bg-primary hover:bg-primary/90 text-primary-foreground"
+              size="lg"
+              onClick={() => setIsProductModalOpen(true)}
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Adicionar Novo Produto
+            </Button>
+          )}
           
           <div className="grid grid-cols-2 gap-3">
             <Button 
@@ -101,6 +110,14 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Product Modal */}
+      {isProductModalOpen && (
+        <ProductModal 
+          isOpen={isProductModalOpen}
+          onClose={() => setIsProductModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
