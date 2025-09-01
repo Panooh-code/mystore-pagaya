@@ -41,6 +41,7 @@ export const useStockMovements = () => {
             product:products(nome)
           )
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -73,6 +74,7 @@ export const useStockMovements = () => {
         .from('product_variants')
         .select('quantidade_loja, quantidade_estoque')
         .eq('id', movementData.variant_id)
+        .is('deleted_at', null)
         .single();
 
       if (variantError) throw variantError;

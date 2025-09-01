@@ -13,6 +13,8 @@ export interface Employee {
   status: 'ativo' | 'pendente' | 'bloqueado';
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
+  deleted_by?: string;
 }
 
 export const useEmployeeManagement = () => {
@@ -36,6 +38,7 @@ export const useEmployeeManagement = () => {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       console.log('useEmployeeManagement: Query result:', { data, error });
@@ -148,11 +151,24 @@ export const useEmployeeManagement = () => {
   };
 
   const deleteEmployee = async (employeeId: string) => {
+    if (!currentEmployee) {
+      toast({
+        title: "Erro ao excluir usuário",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     try {
       const { error } = await supabase
         .from('employees')
-        .delete()
-        .eq('id', employeeId);
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: currentEmployee.id 
+        })
+        .eq('id', employeeId)
+        .is('deleted_at', null);
 
       if (error) throw error;
 

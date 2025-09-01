@@ -70,10 +70,11 @@ export const useProducts = () => {
         .from('products')
         .select(`
           *,
-          supplier:suppliers(*),
+          supplier:suppliers(id, nome, contato, telefone, email, endereco, observacoes),
           variants:product_variants(*),
           created_by_employee:employees!products_created_by_fkey(nome_completo, email)
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       const { data, error } = await query;
@@ -95,6 +96,7 @@ export const useProducts = () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .is('deleted_at', null)
         .order('nome');
 
       if (error) throw error;
@@ -160,18 +162,35 @@ export const useProducts = () => {
   };
 
   const deleteProduct = async (id: string) => {
-    if (!isAdmin) {
+    if (!isAdmin || !employee) {
       toast({ title: "Erro", description: "Sem permissão para excluir produtos", variant: "destructive" });
       return false;
     }
 
     try {
-      const { error } = await supabase
+      // Soft delete cascade: marcar produto e todas suas variantes como deletadas
+      const { error: productError } = await supabase
         .from('products')
-        .delete()
-        .eq('id', id);
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: employee.id 
+        })
+        .eq('id', id)
+        .is('deleted_at', null);
 
-      if (error) throw error;
+      if (productError) throw productError;
+
+      // Soft delete todas as variantes do produto
+      const { error: variantsError } = await supabase
+        .from('product_variants')
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: employee.id 
+        })
+        .eq('product_id', id)
+        .is('deleted_at', null);
+
+      if (variantsError) throw variantsError;
       
       toast({ title: "Sucesso", description: "Produto excluído com sucesso" });
       await fetchProducts();

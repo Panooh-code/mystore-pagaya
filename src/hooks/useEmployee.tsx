@@ -11,6 +11,8 @@ export interface Employee {
   status: 'ativo' | 'pendente' | 'bloqueado';
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
+  deleted_by?: string;
 }
 
 export const useEmployee = () => {
@@ -36,6 +38,7 @@ export const useEmployee = () => {
           .from('employees')
           .select('*')
           .eq('user_id', user.id)
+          .is('deleted_at', null)
           .single();
 
         // Se não encontrou pelo user_id, tenta pelo email (fallback importante)
@@ -45,6 +48,7 @@ export const useEmployee = () => {
             .from('employees')
             .select('*')
             .eq('email', user.email)
+            .is('deleted_at', null)
             .single();
 
           if (!emailError && emailData) {
@@ -70,7 +74,7 @@ export const useEmployee = () => {
         // Verificação especial para admin principal
         if (user.email === 'info@panooh.com' && (!data || data.role !== 'proprietario')) {
           console.log('useEmployee: Special case for main admin');
-          data = {
+          const fallbackEmployee: Employee = {
             id: 'main-admin-fallback',
             user_id: user.id,
             nome_completo: 'Megafoto ADM',
@@ -79,7 +83,8 @@ export const useEmployee = () => {
             status: 'ativo',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          } as Employee;
+          };
+          data = fallbackEmployee as any;
           error = null;
         }
 

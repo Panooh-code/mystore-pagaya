@@ -22,6 +22,7 @@ export const useProductVariants = (productId?: string) => {
         .from('product_variants')
         .select('*')
         .eq('product_id', targetProductId)
+        .is('deleted_at', null)
         .order('referencia');
 
       if (error) throw error;
@@ -118,7 +119,7 @@ export const useProductVariants = (productId?: string) => {
   };
 
   const deleteVariant = async (id: string) => {
-    if (!isAdmin) {
+    if (!isAdmin || !employee) {
       toast({ title: "Erro", description: "Sem permissão para excluir variantes", variant: "destructive" });
       return false;
     }
@@ -126,8 +127,12 @@ export const useProductVariants = (productId?: string) => {
     try {
       const { error } = await supabase
         .from('product_variants')
-        .delete()
-        .eq('id', id);
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: employee.id 
+        })
+        .eq('id', id)
+        .is('deleted_at', null);
 
       if (error) throw error;
       

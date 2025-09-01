@@ -17,6 +17,8 @@ export type Database = {
       employees: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email: string
           id: string
           nome_completo: string
@@ -27,6 +29,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email: string
           id?: string
           nome_completo: string
@@ -37,6 +41,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string
           id?: string
           nome_completo?: string
@@ -52,6 +58,8 @@ export type Database = {
           cor: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           foto_url_1: string | null
           foto_url_2: string | null
           foto_url_3: string | null
@@ -72,6 +80,8 @@ export type Database = {
           cor?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           foto_url_1?: string | null
           foto_url_2?: string | null
           foto_url_3?: string | null
@@ -92,6 +102,8 @@ export type Database = {
           cor?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           foto_url_1?: string | null
           foto_url_2?: string | null
           foto_url_3?: string | null
@@ -130,6 +142,8 @@ export type Database = {
           categoria: string
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           fornecedor_id: string | null
           id: string
           impostos_percentual: number | null
@@ -144,6 +158,8 @@ export type Database = {
           categoria: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           fornecedor_id?: string | null
           id?: string
           impostos_percentual?: number | null
@@ -158,6 +174,8 @@ export type Database = {
           categoria?: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           fornecedor_id?: string | null
           id?: string
           impostos_percentual?: number | null
@@ -188,6 +206,8 @@ export type Database = {
       stock_movements: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           destino: string | null
           employee_id: string
           id: string
@@ -199,6 +219,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           destino?: string | null
           employee_id: string
           id?: string
@@ -210,6 +232,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           destino?: string | null
           employee_id?: string
           id?: string
@@ -233,6 +257,8 @@ export type Database = {
         Row: {
           contato: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           endereco: string | null
           id: string
@@ -244,6 +270,8 @@ export type Database = {
         Insert: {
           contato?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
@@ -255,6 +283,8 @@ export type Database = {
         Update: {
           contato?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
@@ -281,6 +311,14 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      restore_deleted: {
+        Args: { record_id: string; table_name: string }
+        Returns: undefined
+      }
+      soft_delete: {
+        Args: { deleted_by_user: string; record_id: string; table_name: string }
+        Returns: undefined
       }
     }
     Enums: {
