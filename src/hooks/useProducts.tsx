@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployee } from '@/hooks/useEmployee';
-import { useImageUpload } from '@/hooks/useImageUpload';
+import { useImageUpload } from '@/hooks/useImageUpload'; // Importado para lidar com uploads
 import { toast } from '@/hooks/use-toast';
 
 // As interfaces foram mantidas para compatibilidade com o resto do sistema.
@@ -74,8 +74,7 @@ export const useProducts = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
-    // A condição de guarda previne a execução se não houver usuário
-    if (!user?.id) return;
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -100,11 +99,10 @@ export const useProducts = () => {
     } finally {
       setLoading(false);
     }
-    // A dependência agora é user?.id, que é um valor primitivo e estável.
-  }, [user?.id]);
+  }, [user]);
 
   const fetchSuppliers = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user) return;
 
     try {
       const { data, error: fetchError } = await supabase
@@ -119,8 +117,7 @@ export const useProducts = () => {
       console.error('Error fetching suppliers:', err);
       setError(err.message);
     }
-    // A dependência aqui também foi trocada para user?.id.
-  }, [user?.id]);
+  }, [user]);
 
   const createProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'supplier' | 'variants' | 'created_by_employee'>) => {
     if (!isAdmin) {
@@ -164,10 +161,12 @@ export const useProducts = () => {
     }
 
     try {
+      // Passo 1: Remover imagens antigas do Storage, se houver
       if (imagesToRemove.length > 0) {
         await deleteMultipleImages(imagesToRemove, 'product_images');
       }
 
+      // Passo 2: Fazer upload de novas imagens, se houver
       let newImageUrls: string[] = [];
       if (newImageFiles.length > 0) {
         const uploadedUrls = await uploadMultipleImages(newImageFiles, 'product_images');
@@ -176,10 +175,12 @@ export const useProducts = () => {
         }
       }
 
+      // Passo 3: Consolidar a lista final de URLs de imagem
       const currentProduct = products.find(p => p.id === productId);
       const existingImageUrls = currentProduct?.image_urls?.filter(url => !imagesToRemove.includes(url)) || [];
       const finalImageUrls = [...existingImageUrls, ...newImageUrls];
 
+      // Passo 4: Atualizar o produto no banco de dados com os novos dados e a lista de imagens
       const updatesWithImages = {
         ...productUpdates,
         image_urls: finalImageUrls,
@@ -267,7 +268,6 @@ export const useProducts = () => {
   };
 
   useEffect(() => {
-    // Este useEffect agora depende das funções estabilizadas e não causará mais loops.
     if (user) {
       fetchProducts();
       fetchSuppliers();
