@@ -34,38 +34,108 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
+    let authChangeTimeout: NodeJS.Timeout;
+    
+    // Set up auth state listener with debounce to prevent rapid state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        if (event === 'SIGNED_IN') {
-          toast({
-            title: "Bem-vindo!",
-            description: "Login realizado com sucesso.",
-          });
-        } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Logout realizado",
-            description: "Você foi desconectado com sucesso.",
-          });
+        console.log('Auth state change:', event, session?.user?.id, new Date().toISOString());
+        
+        // Clear any pending auth changes
+        if (authChangeTimeout) {
+          clearTimeout(authChangeTimeout);
         }
+        
+        // Debounce auth state changes to prevent rapid toggling
+        authChangeTimeout = setTimeout(() => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+
+          // Only show toasts for explicit user actions, not automatic token refreshes
+          if (event === 'SIGNED_IN' && session) {
+            toast({
+              title: "Bem-vindo!",
+              description: "Login realizado com sucesso.",
+            });
+          } else if (event === 'SIGNED_OUT') {
+            // Don't show logout toast for automatic session expiry
+            const isManualLogout = !document.hidden;
+            if (isManualLogout) {
+              toast({
+                title: "Logout realizado",
+                description: "Você foi desconectado com sucesso.",
+              });
+            }
+          }
+        }, 100);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check for existing session with retry logic
+    const checkSession = async (retryCount = 0) => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error && retryCount < 3) {
+          console.warn('Session check failed, retrying...', error);
+          setTimeout(() => checkSession(retryCount + 1), 1000);
+          return;
+        }
+        
+        console.log('Initial session check:', session?.user?.id, new Date().toISOString());
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (err) {
+        console.error('Session check error:', err);
+        setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
-  }, [toast]);
+    checkSession();
+
+    // Handle visibility change (when app comes back from background)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('App became visible, refreshing session');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session && user) {
+            console.warn('Session lost while app was in background');
+            setSession(null);
+            setUser(null);
+          }
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Periodic session check for mobile reliability
+    const sessionCheckInterval = setInterval(async () => {
+      if (user && !document.hidden) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.warn('Session expired, logging out user');
+            setSession(null);
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Periodic session check failed:', err);
+        }
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(sessionCheckInterval);
+      if (authChangeTimeout) {
+        clearTimeout(authChangeTimeout);
+      }
+    };
+  }, [toast, user]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
