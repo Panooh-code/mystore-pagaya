@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployee } from '@/hooks/useEmployee';
+import { useImageUpload } from '@/hooks/useImageUpload'; // Importado para lidar com uploads
 import { toast } from '@/hooks/use-toast';
 
+// As interfaces foram mantidas para compatibilidade com o resto do sistema.
+// A lógica de edição agora foca no produto principal.
 export interface Supplier {
   id: string;
   nome: string;
@@ -26,6 +29,14 @@ export interface Product {
   observacoes?: string;
   created_at: string;
   created_by?: string;
+  // Novos campos para alinhamento com o novo modal de edição
+  sku?: string;
+  price?: number;
+  promotional_price?: number;
+  cost_price?: number;
+  tax_on_cost?: number;
+  image_urls?: string[];
+  // Relações existentes
   supplier?: Supplier;
   variants?: ProductVariant[];
   created_by_employee?: {
@@ -56,17 +67,18 @@ export interface ProductVariant {
 export const useProducts = () => {
   const { user } = useAuth();
   const { employee, isAdmin } = useEmployee();
+  const { uploadMultipleImages, deleteMultipleImages } = useImageUpload(); // Hook de upload de imagens
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
-      let query = supabase
+      const query = supabase
         .from('products')
         .select(`
           *,
@@ -77,9 +89,9 @@ export const useProducts = () => {
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       setProducts(data || []);
     } catch (err: any) {
       console.error('Error fetching products:', err);
@@ -87,25 +99,25 @@ export const useProducts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('suppliers')
         .select('*')
         .is('deleted_at', null)
         .order('nome');
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       setSuppliers(data || []);
     } catch (err: any) {
       console.error('Error fetching suppliers:', err);
       setError(err.message);
     }
-  };
+  }, [user]);
 
   const createProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'supplier' | 'variants' | 'created_by_employee'>) => {
     if (!isAdmin) {
@@ -119,14 +131,14 @@ export const useProducts = () => {
         created_by: employee?.id
       };
 
-      const { data, error } = await supabase
+      const { data, error: insertError } = await supabase
         .from('products')
         .insert(productWithAudit)
         .select()
         .single();
 
-      if (error) throw error;
-      
+      if (insertError) throw insertError;
+
       toast({ title: "Sucesso", description: "Produto criado com sucesso" });
       await fetchProducts();
       return data;
@@ -137,20 +149,50 @@ export const useProducts = () => {
     }
   };
 
-  const updateProduct = async (id: string, updates: Partial<Product>) => {
+  const updateProduct = async (
+    productId: string,
+    productUpdates: Partial<Product>,
+    newImageFiles: File[],
+    imagesToRemove: string[]
+  ) => {
     if (!isAdmin) {
       toast({ title: "Erro", description: "Sem permissão para editar produtos", variant: "destructive" });
       return false;
     }
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id);
+      // Passo 1: Remover imagens antigas do Storage, se houver
+      if (imagesToRemove.length > 0) {
+        await deleteMultipleImages(imagesToRemove, 'product_images');
+      }
 
-      if (error) throw error;
-      
+      // Passo 2: Fazer upload de novas imagens, se houver
+      let newImageUrls: string[] = [];
+      if (newImageFiles.length > 0) {
+        const uploadedUrls = await uploadMultipleImages(newImageFiles, 'product_images');
+        if (uploadedUrls) {
+          newImageUrls = uploadedUrls;
+        }
+      }
+
+      // Passo 3: Consolidar a lista final de URLs de imagem
+      const currentProduct = products.find(p => p.id === productId);
+      const existingImageUrls = currentProduct?.image_urls?.filter(url => !imagesToRemove.includes(url)) || [];
+      const finalImageUrls = [...existingImageUrls, ...newImageUrls];
+
+      // Passo 4: Atualizar o produto no banco de dados com os novos dados e a lista de imagens
+      const updatesWithImages = {
+        ...productUpdates,
+        image_urls: finalImageUrls,
+      };
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update(updatesWithImages)
+        .eq('id', productId);
+
+      if (updateError) throw updateError;
+
       toast({ title: "Sucesso", description: "Produto atualizado com sucesso" });
       await fetchProducts();
       return true;
@@ -168,30 +210,28 @@ export const useProducts = () => {
     }
 
     try {
-      // Soft delete cascade: marcar produto e todas suas variantes como deletadas
       const { error: productError } = await supabase
         .from('products')
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString(),
-          deleted_by: employee.id 
+          deleted_by: employee.id
         })
         .eq('id', id)
         .is('deleted_at', null);
 
       if (productError) throw productError;
 
-      // Soft delete todas as variantes do produto
       const { error: variantsError } = await supabase
         .from('product_variants')
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString(),
-          deleted_by: employee.id 
+          deleted_by: employee.id
         })
         .eq('product_id', id)
         .is('deleted_at', null);
 
       if (variantsError) throw variantsError;
-      
+
       toast({ title: "Sucesso", description: "Produto excluído com sucesso" });
       await fetchProducts();
       return true;
@@ -209,14 +249,14 @@ export const useProducts = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error: insertError } = await supabase
         .from('suppliers')
         .insert(supplierData)
         .select()
         .single();
 
-      if (error) throw error;
-      
+      if (insertError) throw insertError;
+
       toast({ title: "Sucesso", description: "Fornecedor criado com sucesso" });
       await fetchSuppliers();
       return data;
@@ -232,7 +272,7 @@ export const useProducts = () => {
       fetchProducts();
       fetchSuppliers();
     }
-  }, [user]);
+  }, [user, fetchProducts, fetchSuppliers]);
 
   return {
     products,
