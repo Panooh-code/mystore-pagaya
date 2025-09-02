@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,84 +34,147 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Busca a sessão inicial para verificar se o usuário já está logado
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-      } catch (error) {
-        console.error("Erro ao buscar sessão inicial:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Ouve por mudanças no estado de autenticação (login, logout, etc.)
+    let authChangeTimeout: NodeJS.Timeout;
+    
+    // Set up auth state listener with debounce to prevent rapid state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        // Lógica para verificar o status do funcionário antes de confirmar o login
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          try {
-            const { data: employee } = await supabase
-              .from('employees')
-              .select('status')
-              .eq('user_id', newSession.user.id)
-              .is('deleted_at', null)
-              .single();
+      (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id, new Date().toISOString());
+        
+        // Clear any pending auth changes
+        if (authChangeTimeout) {
+          clearTimeout(authChangeTimeout);
+        }
+        
+        // Debounce auth state changes to prevent rapid toggling
+        authChangeTimeout = setTimeout(async () => {
+          // Check if user has pending status before allowing login
+          if (event === 'SIGNED_IN' && session?.user) {
+            try {
+              const { data: employee } = await supabase
+                .from('employees')
+                .select('status')
+                .eq('user_id', session.user.id)
+                .is('deleted_at', null)
+                .single();
 
-            if (employee?.status === 'pendente' || employee?.status === 'bloqueado') {
-              const title = employee.status === 'pendente' ? "Acesso Pendente" : "Acesso Bloqueado";
-              const description = employee.status === 'pendente'
-                ? "Sua conta ainda está aguardando aprovação. Entre em contato com um administrador."
-                : "Sua conta foi bloqueada. Entre em contato com um administrador.";
-              
-              toast({ variant: "destructive", title, description });
-              await supabase.auth.signOut(); // Força o logout
-              setSession(null);
-              setUser(null);
-              return; // Interrompe a execução para não logar o usuário
+              if (employee?.status === 'pendente') {
+                console.log('User with pending status attempted login, forcing logout');
+                await supabase.auth.signOut();
+                toast({
+                  variant: "destructive",
+                  title: "Acesso Pendente",
+                  description: "Sua conta ainda está aguardando aprovação. Entre em contato com um administrador.",
+                });
+                return;
+              } else if (employee?.status === 'bloqueado') {
+                console.log('Blocked user attempted login, forcing logout');
+                await supabase.auth.signOut();
+                toast({
+                  variant: "destructive",
+                  title: "Acesso Bloqueado",
+                  description: "Sua conta foi bloqueada. Entre em contato com um administrador.",
+                });
+                return;
+              }
+            } catch (error) {
+              console.error('Error checking employee status:', error);
             }
+          }
 
-            // Se o usuário for válido, exibe o toast de boas-vindas
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+
+          // Only show toasts for explicit user actions, not automatic token refreshes
+          if (event === 'SIGNED_IN' && session) {
             toast({
               title: "Bem-vindo!",
               description: "Login realizado com sucesso.",
             });
-
-          } catch (error) {
-            console.error('Erro ao verificar status do funcionário:', error);
-            // Mesmo com erro na verificação, desloga por segurança
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-            return;
+          } else if (event === 'SIGNED_OUT') {
+            // Don't show logout toast for automatic session expiry
+            const isManualLogout = !document.hidden;
+            if (isManualLogout) {
+              toast({
+                title: "Logout realizado",
+                description: "Você foi desconectado com sucesso.",
+              });
+            }
           }
-        } else if (event === 'SIGNED_OUT') {
-            toast({
-              title: "Logout realizado",
-              description: "Você foi desconectado com sucesso.",
-            });
-        }
-
-        // Atualiza o estado da sessão e do usuário
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        }, 100);
       }
     );
 
-    // Limpeza ao desmontar o componente
+    // Check for existing session with retry logic
+    const checkSession = async (retryCount = 0) => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error && retryCount < 3) {
+          console.warn('Session check failed, retrying...', error);
+          setTimeout(() => checkSession(retryCount + 1), 1000);
+          return;
+        }
+        
+        console.log('Initial session check:', session?.user?.id, new Date().toISOString());
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (err) {
+        console.error('Session check error:', err);
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Handle visibility change (when app comes back from background)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('App became visible, refreshing session');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session && user) {
+            console.warn('Session lost while app was in background');
+            setSession(null);
+            setUser(null);
+          }
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Periodic session check for mobile reliability
+    const sessionCheckInterval = setInterval(async () => {
+      if (user && !document.hidden) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.warn('Session expired, logging out user');
+            setSession(null);
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Periodic session check failed:', err);
+        }
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(sessionCheckInterval);
+      if (authChangeTimeout) {
+        clearTimeout(authChangeTimeout);
+      }
     };
-  }, [toast]); // O useEffect agora depende apenas do `toast` que é estável
+  }, [toast, user]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -131,16 +194,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: error.message,
         });
         return { error };
+      } else {
+        // Força o logout imediato para evitar login automático
+        await supabase.auth.signOut();
+        
+        toast({
+          title: "Cadastro realizado!",
+          description: "Seu acesso está sendo analisado. Você receberá uma confirmação em breve.",
+        });
+        
+        return { error: null, success: true };
       }
-
-      // Após o cadastro, o onAuthStateChange cuidará de deslogar se o status for pendente.
-      // A lógica de forçar logout foi removida daqui para centralizar no listener.
-      toast({
-        title: "Cadastro realizado!",
-        description: "Seu acesso está sendo analisado. Você receberá uma confirmação em breve.",
-      });
-
-      return { error: null, success: true };
     } catch (err) {
       console.error('Unexpected signup error:', err);
       return { error: err as AuthError };
@@ -149,7 +213,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -161,8 +225,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           title: "Erro no login",
           description: "Email ou senha incorretos.",
         });
+        return { error };
       }
-      // A verificação de status pendente/bloqueado agora é tratada centralmente pelo onAuthStateChange
+
+      // Verificar status do employee após login bem-sucedido
+      if (data.user) {
+        try {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('status')
+            .eq('user_id', data.user.id)
+            .is('deleted_at', null)
+            .single();
+
+          if (employee?.status === 'pendente') {
+            await supabase.auth.signOut();
+            toast({
+              variant: "destructive",
+              title: "Acesso Pendente",
+              description: "Sua conta ainda está aguardando aprovação. Entre em contato com um administrador.",
+            });
+            return { error: { message: 'Account pending approval' } as AuthError };
+          } else if (employee?.status === 'bloqueado') {
+            await supabase.auth.signOut();
+            toast({
+              variant: "destructive",
+              title: "Acesso Bloqueado",
+              description: "Sua conta foi bloqueada. Entre em contato com um administrador.",
+            });
+            return { error: { message: 'Account blocked' } as AuthError };
+          }
+        } catch (employeeError) {
+          console.error('Error checking employee status after login:', employeeError);
+        }
+      }
+
       return { error };
     } catch (err) {
       console.error('Unexpected signin error:', err);
@@ -211,9 +308,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // O useMemo garante que o objeto de valor do contexto só seja recriado se os seus conteúdos mudarem.
-  // Isso evita re-renderizações desnecessárias nos componentes consumidores.
-  const value = useMemo(() => ({
+  const value = {
     user,
     session,
     loading,
@@ -221,7 +316,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signInWithGoogle,
     signOut,
-  }), [user, session, loading]);
+  };
 
   return (
     <AuthContext.Provider value={value}>
