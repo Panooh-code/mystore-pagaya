@@ -387,6 +387,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      registrar_movimentacao_estoque: {
+        Args: {
+          p_destino?: string
+          p_employee_id: string
+          p_observacoes?: string
+          p_origem?: string
+          p_quantidade: number
+          p_tipo: string
+          p_variant_id: string
+        }
+        Returns: Json
+      }
       restore_deleted: {
         Args: { record_id: string; table_name: string }
         Returns: undefined
