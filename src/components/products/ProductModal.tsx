@@ -15,7 +15,6 @@ import { useProducts, Product, ProductVariant } from '@/hooks/useProducts';
 import { useProductVariants } from '@/hooks/useProductVariants';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { useToast } from '@/hooks/use-toast';
-import { useEmployee } from '@/hooks/useEmployee'; // <-- Adicionado para buscar o cargo do usuário
 import { ProductConfirmationModal } from './ProductConfirmationModal';
 import { formatPrice, parseMultipleInputs } from '@/lib/utils';
 
@@ -27,7 +26,7 @@ interface ProductModalProps {
 
 const CATEGORIES = [
   'Masculino',
-  'Feminino',
+  'Feminino', 
   'Infantil',
   'Acessórios',
   'Calçado',
@@ -40,7 +39,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
   const { createMultipleVariants, updateVariant } = useProductVariants();
   const { uploadImage } = useImageUpload();
   const { toast } = useToast();
-  const { employee } = useEmployee(); // <-- Hook para obter dados do funcionário logado
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
@@ -81,7 +79,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
   const [colorPhotos, setColorPhotos] = useState<Record<string, string>>({});
 
   const isEditing = !!product;
-  const isOwner = employee?.role === 'proprietario'; // <-- Verifica se o usuário é proprietário
 
   // Initialize form data
   useEffect(() => {
@@ -91,9 +88,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         categoria: product.categoria || '',
         modelo: product.modelo || '',
         fornecedor_id: product.fornecedor_id || '',
-        // Apenas preenche os campos de custo se o usuário for proprietário
-        valor_custo: isOwner ? product.valor_custo?.toString() || '' : '',
-        impostos_percentual: isOwner ? product.impostos_percentual?.toString() || '' : '',
+        valor_custo: product.valor_custo?.toString() || '',
+        impostos_percentual: product.impostos_percentual?.toString() || '',
         is_consignado: product.is_consignado || false,
         observacoes: product.observacoes || ''
       });
@@ -104,8 +100,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
           cor: v.cor || '',
           tamanho: v.tamanho || '',
           preco_venda: v.preco_venda || 0,
-          // Apenas preenche o imposto da variante se for proprietário
-          impostos_percentual: isOwner ? v.impostos_percentual || 0 : 0,
           quantidade_loja: v.quantidade_loja || 0,
           quantidade_estoque: v.quantidade_estoque || 0,
           local_loja: v.local_loja || '',
@@ -144,7 +138,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
       });
       setColorPhotos({});
     }
-  }, [product, isOpen, isOwner]);
+  }, [product, isOpen]);
 
   // Parse colors and sizes from input
   const handleColorsInputChange = (value: string) => {
@@ -162,21 +156,21 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
   // Generate variants based on colors and sizes
   const generateVariants = () => {
     const newVariants: Array<Omit<ProductVariant, 'id' | 'product_id' | 'created_at' | 'updated_at'>> = [];
-    const suffixList = inheritanceValues.use_suffixes && inheritanceValues.suffixes
-      ? parseMultipleInputs(inheritanceValues.suffixes)
+    const suffixList = inheritanceValues.use_suffixes && inheritanceValues.suffixes 
+      ? parseMultipleInputs(inheritanceValues.suffixes) 
       : [];
 
     if (colors.length === 0 && sizes.length === 0) {
       // No colors or sizes, create one variant
       const baseSuffix = suffixList.length > 0 ? `-${suffixList[0]}` : '';
       newVariants.push({
-        referencia: inheritanceValues.referencia_base
-          ? `${inheritanceValues.referencia_base}${baseSuffix}`
+        referencia: inheritanceValues.referencia_base 
+          ? `${inheritanceValues.referencia_base}${baseSuffix}` 
           : `${productData.nome.slice(0, 3).toUpperCase()}001`,
         cor: '',
         tamanho: '',
         preco_venda: parseFloat(inheritanceValues.preco_venda) || 0,
-        impostos_percentual: isOwner ? parseFloat(inheritanceValues.impostos_percentual) || 0 : 0,
+        impostos_percentual: parseFloat(inheritanceValues.impostos_percentual) || 0,
         quantidade_loja: 0,
         quantidade_estoque: 0,
         local_loja: '',
@@ -192,17 +186,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         const suffix = inheritanceValues.use_suffixes && suffixList.length > colorIndex
           ? `-${suffixList[colorIndex]}`
           : inheritanceValues.use_suffixes ? `-${String(colorIndex + 1).padStart(2, '0')}` : '';
-
+        
         const existingPhoto = colorPhotos[color] || '';
-
+        
         newVariants.push({
-          referencia: inheritanceValues.referencia_base
-            ? `${inheritanceValues.referencia_base}${suffix}`
+          referencia: inheritanceValues.referencia_base 
+            ? `${inheritanceValues.referencia_base}${suffix}` 
             : `${productData.nome.slice(0, 3).toUpperCase()}${String(colorIndex + 1).padStart(3, '0')}`,
           cor: color,
           tamanho: '',
           preco_venda: parseFloat(inheritanceValues.preco_venda) || 0,
-          impostos_percentual: isOwner ? parseFloat(inheritanceValues.impostos_percentual) || 0 : 0,
+          impostos_percentual: parseFloat(inheritanceValues.impostos_percentual) || 0,
           quantidade_loja: 0,
           quantidade_estoque: 0,
           local_loja: '',
@@ -219,15 +213,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         const suffix = inheritanceValues.use_suffixes && suffixList.length > sizeIndex
           ? `-${suffixList[sizeIndex]}`
           : inheritanceValues.use_suffixes ? `-${String(sizeIndex + 1).padStart(2, '0')}` : '';
-
+        
         newVariants.push({
-          referencia: inheritanceValues.referencia_base
-            ? `${inheritanceValues.referencia_base}${suffix}`
+          referencia: inheritanceValues.referencia_base 
+            ? `${inheritanceValues.referencia_base}${suffix}` 
             : `${productData.nome.slice(0, 3).toUpperCase()}${String(sizeIndex + 1).padStart(3, '0')}`,
           cor: '',
           tamanho: size,
           preco_venda: parseFloat(inheritanceValues.preco_venda) || 0,
-          impostos_percentual: isOwner ? parseFloat(inheritanceValues.impostos_percentual) || 0 : 0,
+          impostos_percentual: parseFloat(inheritanceValues.impostos_percentual) || 0,
           quantidade_loja: 0,
           quantidade_estoque: 0,
           local_loja: '',
@@ -247,15 +241,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
           const suffix = inheritanceValues.use_suffixes && suffixList.length > counter
             ? `-${suffixList[counter]}`
             : inheritanceValues.use_suffixes ? `-${String(counter + 1).padStart(2, '0')}` : '';
-
+          
           newVariants.push({
-            referencia: inheritanceValues.referencia_base
-              ? `${inheritanceValues.referencia_base}${suffix}`
+            referencia: inheritanceValues.referencia_base 
+              ? `${inheritanceValues.referencia_base}${suffix}` 
               : `${productData.nome.slice(0, 3).toUpperCase()}${String(counter + 1).padStart(3, '0')}`,
             cor: color,
             tamanho: size,
             preco_venda: parseFloat(inheritanceValues.preco_venda) || 0,
-            impostos_percentual: isOwner ? parseFloat(inheritanceValues.impostos_percentual) || 0 : 0,
+            impostos_percentual: parseFloat(inheritanceValues.impostos_percentual) || 0,
             quantidade_loja: 0,
             quantidade_estoque: 0,
             local_loja: '',
@@ -278,8 +272,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
   const handleVariantChange = (index: number, field: string, value: string | number) => {
     const updatedVariants = [...variants];
     const currentVariant = updatedVariants[index];
-
-    if (field === 'preco_venda' || field === 'impostos_percentual' || field === 'quantidade_loja' || field === 'quantidade_estoque') {
+    
+    if (field === 'preco_venda' || field === 'impostos_percentual') {
       updatedVariants[index] = {
         ...currentVariant,
         [field]: parseFloat(value as string) || 0
@@ -290,15 +284,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         [field]: value
       };
     }
-
+    
     // Handle photo inheritance by color
     if (field.startsWith('foto_url_') && currentVariant.cor) {
       const newPhoto = value as string;
       if (newPhoto && !colorPhotos[currentVariant.cor]) {
         setColorPhotos(prev => ({ ...prev, [currentVariant.cor!]: newPhoto }));
-
+        
         // Apply to all variants with the same color
-        const sameColorVariants = updatedVariants.filter((v, i) =>
+        const sameColorVariants = updatedVariants.filter((v, i) => 
           i !== index && v.cor === currentVariant.cor && !v.foto_url_1
         );
         sameColorVariants.forEach(variant => {
@@ -306,7 +300,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         });
       }
     }
-
+    
     setVariants(updatedVariants);
   };
 
@@ -321,33 +315,33 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
       return;
     }
 
-    const suffixList = inheritanceValues.use_suffixes && inheritanceValues.suffixes
-      ? parseMultipleInputs(inheritanceValues.suffixes)
+    const suffixList = inheritanceValues.use_suffixes && inheritanceValues.suffixes 
+      ? parseMultipleInputs(inheritanceValues.suffixes) 
       : [];
 
     const updatedVariants = variants.map((variant, index) => {
       const updates: any = { ...variant };
-
+      
       if (inheritanceValues.preco_venda) {
         updates.preco_venda = parseFloat(inheritanceValues.preco_venda);
       }
-
-      if (isOwner && inheritanceValues.impostos_percentual) {
+      
+      if (inheritanceValues.impostos_percentual) {
         updates.impostos_percentual = parseFloat(inheritanceValues.impostos_percentual);
       }
-
+      
       if (inheritanceValues.referencia_base) {
         const suffix = inheritanceValues.use_suffixes && suffixList.length > index
           ? `-${suffixList[index]}`
           : inheritanceValues.use_suffixes ? `-${String(index + 1).padStart(2, '0')}` : '';
         updates.referencia = `${inheritanceValues.referencia_base}${suffix}`;
       }
-
+      
       return updates;
     });
-
+    
     setVariants(updatedVariants);
-
+    
     toast({
       title: "Valores aplicados",
       description: `Valores aplicados a ${variants.length} variantes`
@@ -391,16 +385,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
   // Final submission
   const handleFinalSubmit = async () => {
     setSubmitting(true);
-
+    
     try {
       const productPayload = {
         nome: productData.nome,
         categoria: productData.categoria,
         modelo: productData.modelo || null,
         fornecedor_id: productData.fornecedor_id || null,
-        // Apenas inclui os campos de custo se o usuário for proprietário
-        valor_custo: isOwner && productData.valor_custo ? parseFloat(productData.valor_custo) : null,
-        impostos_percentual: isOwner && productData.impostos_percentual ? parseFloat(productData.impostos_percentual) : 0,
+        valor_custo: productData.valor_custo ? parseFloat(productData.valor_custo) : null,
+        impostos_percentual: productData.impostos_percentual ? parseFloat(productData.impostos_percentual) : 0,
         is_consignado: productData.is_consignado,
         observacoes: productData.observacoes || null
       };
@@ -444,7 +437,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
       }
 
       await fetchProducts();
-
+      
       toast({
         title: "Sucesso",
         description: isEditing ? "Produto atualizado com sucesso" : "Produto criado com sucesso"
@@ -516,8 +509,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                     <Label htmlFor="categoria" className="text-sm font-medium">
                       Categoria *
                     </Label>
-                    <Select
-                      value={productData.categoria}
+                    <Select 
+                      value={productData.categoria} 
                       onValueChange={(value) => setProductData(prev => ({ ...prev, categoria: value }))}
                     >
                       <SelectTrigger className="mt-1">
@@ -546,8 +539,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
                     <div className="space-y-2">
                       <Label htmlFor="fornecedor">Fornecedor</Label>
-                      <Select
-                        value={productData.fornecedor_id}
+                      <Select 
+                        value={productData.fornecedor_id} 
                         onValueChange={(value) => setProductData(prev => ({ ...prev, fornecedor_id: value }))}
                       >
                         <SelectTrigger>
@@ -564,34 +557,31 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                     </div>
                   </div>
 
-                  {/* --- Campos Restritos ao Proprietário --- */}
-                  {isOwner && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-amber-500/30 rounded-lg bg-amber-500/5">
-                      <div className="space-y-2">
-                        <Label htmlFor="valor_custo" className="text-amber-600">Valor de Custo (€)</Label>
-                        <Input
-                          id="valor_custo"
-                          type="number"
-                          step="0.01"
-                          value={productData.valor_custo}
-                          onChange={(e) => setProductData(prev => ({ ...prev, valor_custo: e.target.value }))}
-                          placeholder="0.00 (visível apenas para proprietários)"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="impostos" className="text-amber-600">Impostos (%)</Label>
-                        <Input
-                          id="impostos"
-                          type="number"
-                          step="0.01"
-                          value={productData.impostos_percentual}
-                          onChange={(e) => setProductData(prev => ({ ...prev, impostos_percentual: e.target.value }))}
-                          placeholder="0.00 (visível apenas para proprietários)"
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="valor_custo">Valor de Custo (€)</Label>
+                      <Input
+                        id="valor_custo"
+                        type="number"
+                        step="0.01"
+                        value={productData.valor_custo}
+                        onChange={(e) => setProductData(prev => ({ ...prev, valor_custo: e.target.value }))}
+                        placeholder="0.00"
+                      />
                     </div>
-                  )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="impostos">Impostos (%)</Label>
+                      <Input
+                        id="impostos"
+                        type="number"
+                        step="0.01"
+                        value={productData.impostos_percentual}
+                        onChange={(e) => setProductData(prev => ({ ...prev, impostos_percentual: e.target.value }))}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
 
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -630,7 +620,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         id="referencia_base"
                         value={inheritanceValues.referencia_base}
                         onChange={(e) => setInheritanceValues(prev => ({ ...prev, referencia_base: e.target.value }))}
-                        placeholder="Ex: ABC (será usado como ABC-A1, ABC-B2...)"
+                        placeholder="Ex: ABC (será usado como ABC001, ABC002...)"
                       />
                       <p className="text-xs text-muted-foreground">
                         Se não preenchido, será gerado automaticamente com base no nome do produto
@@ -650,51 +640,48 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         />
                       </div>
 
-                      {/* Campo de imposto na herança visível apenas para proprietário */}
-                      {isOwner && (
-                        <div className="space-y-2">
-                          <Label htmlFor="impostos_heranca" className="text-amber-600">Impostos (%)</Label>
-                          <Input
-                            id="impostos_heranca"
-                            type="number"
-                            step="0.01"
-                            value={inheritanceValues.impostos_percentual}
-                            onChange={(e) => setInheritanceValues(prev => ({ ...prev, impostos_percentual: e.target.value }))}
-                            placeholder="0.00"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Suffix Configuration */}
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="use_suffixes"
-                        checked={inheritanceValues.use_suffixes}
-                        onCheckedChange={(checked) => setInheritanceValues(prev => ({ ...prev, use_suffixes: checked }))}
-                      />
-                      <Label htmlFor="use_suffixes" className="font-medium">Usar sufixos personalizados para referências</Label>
-                    </div>
-
-                    {inheritanceValues.use_suffixes && (
                       <div className="space-y-2">
-                        <Label htmlFor="suffixes">Sufixos</Label>
+                        <Label htmlFor="impostos_heranca">Impostos (%)</Label>
                         <Input
-                          id="suffixes"
-                          value={inheritanceValues.suffixes}
-                          onChange={(e) => setInheritanceValues(prev => ({ ...prev, suffixes: e.target.value }))}
-                          placeholder="Ex: A1, B2, C3 ou 01, 02, 03"
+                          id="impostos_heranca"
+                          type="number"
+                          step="0.01"
+                          value={inheritanceValues.impostos_percentual}
+                          onChange={(e) => setInheritanceValues(prev => ({ ...prev, impostos_percentual: e.target.value }))}
+                          placeholder="0.00"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Separe os sufixos por vírgula ou ponto e vírgula. Serão aplicados em sequência após "-" no código de referência.
-                        </p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                   </div>
 
-                  <div className="space-y-4">
+                   {/* Suffix Configuration */}
+                   <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                     <div className="flex items-center space-x-2">
+                       <Switch
+                         id="use_suffixes"
+                         checked={inheritanceValues.use_suffixes}
+                         onCheckedChange={(checked) => setInheritanceValues(prev => ({ ...prev, use_suffixes: checked }))}
+                       />
+                       <Label htmlFor="use_suffixes" className="font-medium">Usar sufixos personalizados para referências</Label>
+                     </div>
+                     
+                     {inheritanceValues.use_suffixes && (
+                       <div className="space-y-2">
+                         <Label htmlFor="suffixes">Sufixos</Label>
+                         <Input
+                           id="suffixes"
+                           value={inheritanceValues.suffixes}
+                           onChange={(e) => setInheritanceValues(prev => ({ ...prev, suffixes: e.target.value }))}
+                           placeholder="Ex: A1, B2, C3 ou 01, 02, 03"
+                         />
+                         <p className="text-xs text-muted-foreground">
+                           Separe os sufixos por vírgula ou ponto e vírgula. Serão aplicados em sequência após "-" no código de referência
+                         </p>
+                       </div>
+                     )}
+                   </div>
+
+                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="cores">Cores</Label>
                       <Input
@@ -704,7 +691,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         placeholder="Ex: Azul, Vermelho; Verde, Preto"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Separe as cores por vírgula ou ponto e vírgula.
+                        Separe as cores por vírgula ou ponto e vírgula
                       </p>
                       {colors.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -726,7 +713,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         placeholder="Ex: P, M, G; 38, 40, 42"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Separe os tamanhos por vírgula ou ponto e vírgula.
+                        Separe os tamanhos por vírgula ou ponto e vírgula
                       </p>
                       {sizes.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -742,17 +729,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-sm text-muted-foreground">
-                      {colors.length === 0 && sizes.length === 0 &&
-                        "Será criada 1 variante sem cor nem tamanho."
+                      {colors.length === 0 && sizes.length === 0 && 
+                        "Será criada 1 variante sem cor nem tamanho"
                       }
-                      {colors.length > 0 && sizes.length === 0 &&
-                        `Serão criadas ${colors.length} variantes (só cores).`
+                      {colors.length > 0 && sizes.length === 0 && 
+                        `Serão criadas ${colors.length} variantes (só cores)`
                       }
-                      {colors.length === 0 && sizes.length > 0 &&
-                        `Serão criadas ${sizes.length} variantes (só tamanhos).`
+                      {colors.length === 0 && sizes.length > 0 && 
+                        `Serão criadas ${sizes.length} variantes (só tamanhos)`
                       }
-                      {colors.length > 0 && sizes.length > 0 &&
-                        `Serão criadas ${colors.length * sizes.length} variantes (cores × tamanhos).`
+                      {colors.length > 0 && sizes.length > 0 && 
+                        `Serão criadas ${colors.length * sizes.length} variantes (cores × tamanhos)`
                       }
                     </p>
                   </div>
@@ -782,16 +769,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                     {variants.map((variant, index) => (
                       <Card key={index} className="p-4">
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            <div className="space-y-2">
-                              <Label>Referência</Label>
-                              <Input
-                                value={variant.referencia}
-                                onChange={(e) => handleVariantChange(index, 'referencia', e.target.value)}
-                                placeholder="REF001"
-                                className="min-w-0 w-full font-mono text-sm"
-                              />
-                            </div>
+                           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                             <div className="space-y-2">
+                               <Label>Referência</Label>
+                               <Input
+                                 value={variant.referencia}
+                                 onChange={(e) => handleVariantChange(index, 'referencia', e.target.value)}
+                                 placeholder="REF001"
+                                 className="min-w-0 w-full font-mono text-sm"
+                               />
+                             </div>
 
                             <div className="space-y-2">
                               <Label>Cor</Label>
@@ -822,25 +809,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                               />
                             </div>
 
-                            {isOwner && (
-                              <div className="space-y-2">
-                                <Label className="text-amber-600">Impostos (%)</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={variant.impostos_percentual || 0}
-                                  onChange={(e) => handleVariantChange(index, 'impostos_percentual', e.target.value)}
-                                  placeholder="0.00"
-                                />
-                              </div>
-                            )}
+                             <div className="space-y-2">
+                               <Label>Impostos (%)</Label>
+                               <Input
+                                 type="number"
+                                 step="0.01"
+                                 value={variant.impostos_percentual || 0}
+                                 onChange={(e) => handleVariantChange(index, 'impostos_percentual', e.target.value)}
+                                 placeholder="0.00"
+                               />
+                             </div>
 
                             <div className="space-y-2">
                               <Label>Estoque Loja</Label>
                               <Input
                                 type="number"
                                 value={variant.quantidade_loja}
-                                onChange={(e) => handleVariantChange(index, 'quantidade_loja', e.target.value)}
+                                onChange={(e) => handleVariantChange(index, 'quantidade_loja', parseInt(e.target.value) || 0)}
                                 placeholder="0"
                               />
                             </div>
@@ -852,7 +837,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                               <Input
                                 type="number"
                                 value={variant.quantidade_estoque}
-                                onChange={(e) => handleVariantChange(index, 'quantidade_estoque', e.target.value)}
+                                onChange={(e) => handleVariantChange(index, 'quantidade_estoque', parseInt(e.target.value) || 0)}
                                 placeholder="0"
                               />
                             </div>
@@ -885,17 +870,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                   <Label className="text-xs">Foto {imageIndex}</Label>
                                   <div className="relative">
                                     {variant[`foto_url_${imageIndex}` as keyof typeof variant] ? (
-                                      <div className="relative group">
+                                      <div className="relative">
                                         <img
                                           src={variant[`foto_url_${imageIndex}` as keyof typeof variant] as string}
                                           alt={`Foto ${imageIndex}`}
                                           className="w-full h-20 object-cover rounded border"
                                         />
                                         <Button
-                                          type="button"
                                           variant="destructive"
                                           size="sm"
-                                          className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                          className="absolute top-1 right-1 h-6 w-6 p-0"
                                           onClick={() => handleVariantChange(index, `foto_url_${imageIndex}`, '')}
                                         >
                                           <X className="h-3 w-3" />
@@ -936,7 +920,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                   </Button>
                 )}
               </div>
-
+              
               <Button onClick={handleSubmit} disabled={submitting}>
                 {currentStep < 3 ? (
                   <>

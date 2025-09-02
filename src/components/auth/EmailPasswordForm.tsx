@@ -23,13 +23,12 @@ const signupSchema = z.object({
 
 interface EmailPasswordFormProps {
   type: 'login' | 'signup';
-  onSignupSuccess?: () => void;
 }
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
 
-export const EmailPasswordForm = ({ type, onSignupSuccess }: EmailPasswordFormProps) => {
+export const EmailPasswordForm = ({ type }: EmailPasswordFormProps) => {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
 
@@ -51,13 +50,7 @@ export const EmailPasswordForm = ({ type, onSignupSuccess }: EmailPasswordFormPr
         await signIn(email, password);
       } else {
         const { fullName, email, password } = data as SignupFormData;
-        const result = await signUp(email, password, fullName);
-        
-        // Se cadastro foi bem-sucedido, limpa o formulário e troca para a aba de login
-        if (result.success && !result.error) {
-          form.reset();
-          onSignupSuccess?.();
-        }
+        await signUp(email, password, fullName);
       }
     } catch (error) {
       console.error(`${type} error:`, error);

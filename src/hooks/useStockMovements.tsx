@@ -69,26 +69,77 @@ export const useStockMovements = () => {
     }
 
     try {
-      // Chama a função PostgreSQL segura e transacional
-      const { data, error } = await supabase.rpc('registrar_movimentacao_estoque', {
-        p_variant_id: movementData.variant_id,
-        p_employee_id: employee.id,
-        p_tipo: movementData.tipo,
-        p_quantidade: movementData.quantidade,
-        p_origem: movementData.origem,
-        p_destino: movementData.destino,
-        p_observacoes: movementData.observacoes
-      });
+      // Start a transaction to update both stock and create movement
+      const { data: variant, error: variantError } = await supabase
+        .from('product_variants')
+        .select('quantidade_loja, quantidade_estoque')
+        .eq('id', movementData.variant_id)
+        .is('deleted_at', null)
+        .single();
 
-      if (error) throw error;
+      if (variantError) throw variantError;
+
+      let updates: any = {};
+      
+      // Calculate new quantities based on movement type
+      if (movementData.tipo === 'entrada') {
+        if (movementData.destino === 'loja') {
+          updates.quantidade_loja = variant.quantidade_loja + movementData.quantidade;
+        } else if (movementData.destino === 'estoque') {
+          updates.quantidade_estoque = variant.quantidade_estoque + movementData.quantidade;
+        }
+      } else if (movementData.tipo === 'saida' || movementData.tipo === 'perda' || movementData.tipo === 'venda') {
+        if (movementData.origem === 'loja') {
+          updates.quantidade_loja = variant.quantidade_loja - movementData.quantidade;
+        } else if (movementData.origem === 'estoque') {
+          updates.quantidade_estoque = variant.quantidade_estoque - movementData.quantidade;
+        }
+      } else if (movementData.tipo === 'transferencia') {
+        if (movementData.origem === 'loja' && movementData.destino === 'estoque') {
+          updates.quantidade_loja = variant.quantidade_loja - movementData.quantidade;
+          updates.quantidade_estoque = variant.quantidade_estoque + movementData.quantidade;
+        } else if (movementData.origem === 'estoque' && movementData.destino === 'loja') {
+          updates.quantidade_estoque = variant.quantidade_estoque - movementData.quantidade;
+          updates.quantidade_loja = variant.quantidade_loja + movementData.quantidade;
+        }
+      }
+
+      // Check for negative stock
+      if (updates.quantidade_loja < 0 || updates.quantidade_estoque < 0) {
+        toast({ title: "Erro", description: "Estoque insuficiente para esta operação", variant: "destructive" });
+        return false;
+      }
+
+      // Update variant quantities
+      const { error: updateError } = await supabase
+        .from('product_variants')
+        .update(updates)
+        .eq('id', movementData.variant_id);
+
+      if (updateError) throw updateError;
+
+      // Create movement record
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          variant_id: movementData.variant_id,
+          employee_id: employee.id,
+          tipo: movementData.tipo,
+          tipo_movimento: movementData.tipo.toUpperCase() as any,
+          quantidade: movementData.quantidade,
+          origem: movementData.origem,
+          destino: movementData.destino,
+          observacoes: movementData.observacoes
+        });
+
+      if (movementError) throw movementError;
 
       toast({ title: "Sucesso", description: "Movimentação registrada com sucesso" });
       await fetchMovements();
       return true;
     } catch (err: any) {
       console.error('Error creating movement:', err);
-      const errorMessage = err.message || 'Erro ao registrar movimentação';
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
       return false;
     }
   };
