@@ -8,6 +8,11 @@ import { EmailPasswordForm } from './EmailPasswordForm';
 export const AuthForm = () => {
   const [activeTab, setActiveTab] = useState('login');
 
+  const handleSignupSuccess = () => {
+    // Troca automaticamente para a aba de login após cadastro bem-sucedido
+    setActiveTab('login');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -73,7 +78,7 @@ export const AuthForm = () => {
                   </div>
                 </div>
 
-                <EmailPasswordForm type="signup" />
+                <EmailPasswordForm type="signup" onSignupSuccess={handleSignupSuccess} />
               </div>
             </TabsContent>
           </motion.div>
